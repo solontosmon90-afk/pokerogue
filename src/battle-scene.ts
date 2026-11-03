@@ -1,5 +1,5 @@
 import { applyAbAttrs } from "#abilities/apply-ab-attrs";
-import { addShards, getExpMultiplier, getMoneyMultiplier, getShardsForWave } from "#app/upgrades";
+import { addShards, getExpMultiplier, getMoneyMultiplier, getShardsForWave, getStartingBallsBonus } from "#app/upgrades";
 import { Animation } from "#app/animations";
 import { Battle } from "#app/battle";
 import {
@@ -1140,7 +1140,7 @@ export class BattleScene extends SceneBase {
           .filter(pt => pt !== PokeballType.LUXURY_BALL)
           .map(t => [t, 0]),
       );
-      this.pokeballCounts[PokeballType.POKEBALL] = 5;
+      this.pokeballCounts[PokeballType.POKEBALL] = 5 + getStartingBallsBonus();
     }
 
     this.modifiers = [];

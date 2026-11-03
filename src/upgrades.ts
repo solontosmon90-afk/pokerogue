@@ -6,7 +6,7 @@
 
 const STORAGE_KEY = "pr_upgrades_v1";
 
-export type UpgradeId = "candy" | "luck" | "exp" | "money";
+export type UpgradeId = "candy" | "luck" | "exp" | "money" | "shop" | "balls" | "shards";
 
 export interface UpgradeDef {
   id: UpgradeId;
@@ -58,6 +58,33 @@ export const UPGRADES: readonly UpgradeDef[] = [
     costGrowth: 1.4,
     perLevel: 0.1,
   },
+  {
+    id: "shop",
+    name: "Shop Discount",
+    description: "-5% shop prices per level",
+    maxLevel: 8,
+    baseCost: 30,
+    costGrowth: 1.6,
+    perLevel: 0.05,
+  },
+  {
+    id: "balls",
+    name: "Start Balls",
+    description: "+2 starting Poke Balls per level",
+    maxLevel: 10,
+    baseCost: 15,
+    costGrowth: 1.5,
+    perLevel: 2,
+  },
+  {
+    id: "shards",
+    name: "Shard Magnet",
+    description: "+10% shards per level",
+    maxLevel: 10,
+    baseCost: 40,
+    costGrowth: 1.6,
+    perLevel: 0.1,
+  },
 ];
 
 interface UpgradeSave {
@@ -97,23 +124,10 @@ function getDef(id: UpgradeId): UpgradeDef {
   return UPGRADES.find(u => u.id === id)!;
 }
 
-// ---------- Shards (currency) ----------
-
-export function getShards(): number {
-  return load().shards;
-}
-
-export function addShards(amount: number): void {
-  if (amount <= 0) {
-    return;
-  }
-  load().shards += Math.floor(amount);
-  save();
-}
-
-/** Shards earned for clearing a wave: 1 + 1 per 20 waves, plus 5 extra on every 10th (boss) wave. */
-export function getShardsForWave(waveIndex: number): number {
-  return 1 + Math.floor(waveIndex / 20) + (waveIndex % 10 === 0 ? 5 : 0);
+/** Rounds randomly up or down in proportion to the fractional part, so small amounts still benefit. */
+function roundFair(value: number): number {
+  const whole = Math.floor(value);
+  return whole + (Math.random() < value - whole ? 1 : 0);
 }
 
 // ---------- Levels and buying ----------
@@ -145,21 +159,38 @@ export function buyUpgrade(id: UpgradeId): boolean {
   return true;
 }
 
+// ---------- Shards (currency) ----------
+
+export function getShards(): number {
+  return load().shards;
+}
+
+export function addShards(amount: number): void {
+  if (amount <= 0) {
+    return;
+  }
+  load().shards += Math.floor(amount);
+  save();
+}
+
+/**
+ * Shards earned for clearing a wave: 1 + 1 per 20 waves, plus 5 extra on every 10th (boss) wave,
+ * increased by the Shard Magnet upgrade.
+ */
+export function getShardsForWave(waveIndex: number): number {
+  const base = 1 + Math.floor(waveIndex / 20) + (waveIndex % 10 === 0 ? 5 : 0);
+  return roundFair(base * (1 + getUpgradeLevel("shards") * getDef("shards").perLevel));
+}
+
 // ---------- Effect helpers (used by the game code) ----------
 
 export function getCandyMultiplier(): number {
   return 1 + getUpgradeLevel("candy") * getDef("candy").perLevel;
 }
 
-/**
- * Applies the candy upgrade to a candy amount.
- * The fractional part is rounded up at random, so small amounts still benefit
- * (for example 1 candy at +25% gives 2 candy about a quarter of the time).
- */
+/** Applies the candy upgrade to a candy amount (fractions are rounded randomly). */
 export function boostCandy(baseAmount: number): number {
-  const boosted = baseAmount * getCandyMultiplier();
-  const whole = Math.floor(boosted);
-  return whole + (Math.random() < boosted - whole ? 1 : 0);
+  return roundFair(baseAmount * getCandyMultiplier());
 }
 
 export function getLuckBonus(): number {
@@ -172,4 +203,14 @@ export function getExpMultiplier(): number {
 
 export function getMoneyMultiplier(): number {
   return 1 + getUpgradeLevel("money") * getDef("money").perLevel;
+}
+
+/** Multiplier applied to shop prices (1 = full price). */
+export function getShopPriceMultiplier(): number {
+  return 1 - getUpgradeLevel("shop") * getDef("shop").perLevel;
+}
+
+/** Extra Poke Balls at the start of a run. */
+export function getStartingBallsBonus(): number {
+  return getUpgradeLevel("balls") * getDef("balls").perLevel;
 }

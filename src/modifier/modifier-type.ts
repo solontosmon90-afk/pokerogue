@@ -1,5 +1,5 @@
 import { TYPE_BOOST_ITEM_BOOST_PERCENT } from "#app/constants";
-import { getLuckBonus } from "#app/upgrades";
+import { getLuckBonus, getShopPriceMultiplier } from "#app/upgrades";
 import { timedEventManager } from "#app/global-event-manager";
 import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
@@ -2864,7 +2864,7 @@ export class ModifierTypeOption {
   constructor(type: ModifierType, upgradeCount: number, cost = 0) {
     this.type = type;
     this.upgradeCount = upgradeCount;
-    this.cost = Math.min(Math.round(cost), Number.MAX_SAFE_INTEGER);
+    this.cost = Math.min(Math.round(cost * getShopPriceMultiplier()), Number.MAX_SAFE_INTEGER);
   }
 }
 
