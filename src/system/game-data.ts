@@ -1,4 +1,5 @@
 import { pokerogueApi } from "#api/api";
+import { boostCandy } from "#app/upgrades";
 import { clientSessionId, getSessionDataLocalStorageKey, loggedInUser, updateUserInfo } from "#app/account";
 import { defaultStarterSpecies, saveKey } from "#app/constants";
 import { getGameMode } from "#app/game-mode";
@@ -1724,7 +1725,7 @@ export class GameData {
         const shinyBonus = pokemon.isShiny() ? 5 * Math.pow(2, pokemon.variant ?? 0) : 1;
         const eggOrBossBonus = fromEgg || pokemon.isBoss() ? 2 : 1;
         const eventBonus = fromEgg ? 0 : timedEventManager.getExtraCatchCandy();
-        const totalCandy = shinyBonus * eggOrBossBonus + eventBonus;
+        const totalCandy = boostCandy(shinyBonus * eggOrBossBonus + eventBonus);
         this.addStarterCandy(species.speciesId, totalCandy);
       }
     }

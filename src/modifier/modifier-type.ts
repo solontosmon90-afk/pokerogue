@@ -1,4 +1,5 @@
 import { TYPE_BOOST_ITEM_BOOST_PERCENT } from "#app/constants";
+import { getLuckBonus } from "#app/upgrades";
 import { timedEventManager } from "#app/global-event-manager";
 import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
@@ -2899,7 +2900,7 @@ export function getPartyLuckValue(party: readonly Pokemon[]): number {
     0,
     14,
   );
-  return Math.min(timedEventManager.getEventLuckBoost() + (luck ?? 0), 14);
+    return Math.min(timedEventManager.getEventLuckBoost() + (luck ?? 0) + getLuckBonus(), 14);
 }
 
 export function getLuckString(luckValue: number): string {

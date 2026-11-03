@@ -1,5 +1,6 @@
 import { pokerogueApi } from "#api/api";
 import { loggedInUser, updateUserInfo } from "#app/account";
+import { buyUpgrade, getShards, getUpgradeCost, getUpgradeLevel, UPGRADES } from "#app/upgrades";
 import { audioManager } from "#app/global-audio-manager";
 import { globalScene } from "#app/global-scene";
 import { handleTutorial, Tutorial } from "#app/tutorial";
@@ -46,6 +47,7 @@ enum MenuOptions {
   EGG_LIST,
   EGG_GACHA,
   POKEDEX,
+  UPGRADES,
   MANAGE_DATA,
   COMMUNITY,
   SAVE_AND_QUIT,
@@ -196,7 +198,7 @@ export class MenuUiHandler extends OptionSelectUiHandler {
       }
 
       return {
-        label: `${i18next.t(`menuUiHandler:${toCamelCase(MenuOptions[option])}`)}`,
+       label: option === MenuOptions.UPGRADES ? "Upgrades" : `${i18next.t(`menuUiHandler:${toCamelCase(MenuOptions[option])}`)}`,
         handler: () => this.optionSelected(option),
         keepOpen: true,
         ...conditionalOpts,
@@ -568,7 +570,49 @@ export class MenuUiHandler extends OptionSelectUiHandler {
       .setX(this.textPadding + (show ? 1 : 0))
       .setY(this.textPadding + (show ? 0.4 : 0));
   }
+  private showUpgradesMenu(): void {
+    const ui = this.getUi();
 
+    const options: OptionSelectItem[] = UPGRADES.map(def => {
+      const level = getUpgradeLevel(def.id);
+      const cost = getUpgradeCost(def.id);
+      return {
+        label: `${def.name} ${level}/${def.maxLevel} - ${cost === null ? "MAX" : cost}`,
+        handler: () => {
+          if (cost === null) {
+            ui.showText("Already at max level!", 0);
+            return true;
+          }
+          if (!buyUpgrade(def.id)) {
+            ui.showText(`Not enough shards! Need ${cost}.`, 0);
+            return true;
+          }
+          // Reopen the list so the new level and cost show up
+          Promise.resolve(ui.revertMode()).then(() => this.showUpgradesMenu());
+          return true;
+        },
+        keepOpen: true,
+      } satisfies OptionSelectItem;
+    });
+
+    options.push({
+      label: i18next.t("menuUiHandler:cancel"),
+      handler: () => {
+        ui.revertMode();
+        ui.showText("", 0);
+        return true;
+      },
+      keepOpen: true,
+    });
+
+    ui.showText(`Shards: ${getShards()}`, 0);
+    ui.setOverlayMode(UiMode.MENU_OPTION_SELECT, {
+      xOffset: this.optionSelectBg.displayWidth,
+      yOffset: this.menuMessageBox.displayHeight + 1,
+      options,
+      maxOptions: 7,
+    });
+  }
   private optionSelected(option: MenuOptions): boolean {
     let success = false;
     const ui = this.getUi();
@@ -602,6 +646,10 @@ export class MenuUiHandler extends OptionSelectUiHandler {
       case MenuOptions.POKEDEX:
         ui.revertMode();
         ui.setOverlayMode(UiMode.POKEDEX);
+        success = true;
+        break;
+      case MenuOptions.UPGRADES:
+        this.showUpgradesMenu();
         success = true;
         break;
       case MenuOptions.MANAGE_DATA:

@@ -1,4 +1,5 @@
 import { applyAbAttrs } from "#abilities/apply-ab-attrs";
+import { addShards, getExpMultiplier, getMoneyMultiplier, getShardsForWave } from "#app/upgrades";
 import { Animation } from "#app/animations";
 import { Battle } from "#app/battle";
 import {
@@ -1553,6 +1554,7 @@ export class BattleScene extends SceneBase {
 
   // TODO: Split this up and move it to a "post battle phase"
   private doPostBattleCleanup(lastBattle: Battle, maxExpLevel: number): void {
+    addShards(getShardsForWave(lastBattle.waveIndex));
     const isNewBiome = this.isNewBiome(lastBattle);
     /** Whether to reset and recall pokemon */
     const resetArenaState =
@@ -2386,7 +2388,7 @@ export class BattleScene extends SceneBase {
     const moneyValue =
       Math.pow((waveSetIndex + 1 + (0.75 + (((waveIndex - 1) % 10) + 1) / 10)) * 100, 1 + 0.005 * waveSetIndex)
       * moneyMultiplier;
-    return Math.floor(moneyValue / 10) * 10;
+    return Math.floor((moneyValue * getMoneyMultiplier()) / 10) * 10;
   }
 
   addModifier(
@@ -3377,7 +3379,7 @@ export class BattleScene extends SceneBase {
         if (activeOverrides.XP_MULTIPLIER_OVERRIDE !== null) {
           expMultiplier = activeOverrides.XP_MULTIPLIER_OVERRIDE;
         }
-        const pokemonExp = new NumberHolder(expValue * expMultiplier);
+        const pokemonExp = new NumberHolder(expValue * expMultiplier * getExpMultiplier());
         this.applyModifiers(PokemonExpBoosterModifier, true, partyMember, pokemonExp);
         partyMemberExp.push(Math.floor(pokemonExp.value));
       }
