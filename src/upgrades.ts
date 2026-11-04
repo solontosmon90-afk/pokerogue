@@ -79,11 +79,11 @@ export const UPGRADES: readonly UpgradeDef[] = [
   {
     id: "shards",
     name: "Shard Magnet",
-    description: "+40% shards per level",
+    description: "+50% shards per level",
     maxLevel: 10,
     baseCost: 40,
     costGrowth: 1.6,
-    perLevel: 0.4,
+    perLevel: 0.5,
   },
 ];
 
