@@ -92,7 +92,7 @@ export const UPGRADES: readonly UpgradeDef[] = [
     description: "+70% shards per level",
     maxLevel: 10,
     baseCost: 40,
-    costGrowth: 1.6,
+    costGrowth: 1.3,
     perLevel: 0.7,
   },
   {
