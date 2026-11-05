@@ -23,6 +23,14 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      - name: Fixed signing key
+        run: |
+          test -f debug.keystore.b64 || (echo "debug.keystore.b64 is missing from the repo root" && exit 1)
+          tr -d ' \r\n' < debug.keystore.b64 | base64 -d > debug.keystore
+          keytool -list -keystore debug.keystore -storepass android | grep -q androiddebugkey || (echo "keystore text is damaged" && exit 1)
+          mkdir -p ~/.android
+          cp debug.keystore ~/.android/debug.keystore
+
       - name: Install deps
         run: pnpm install --frozen-lockfile
 
@@ -49,6 +57,23 @@ jobs:
         run: |
           sed -i 's/<activity /<activity android:screenOrientation="sensorLandscape" /' \
             android/app/src/main/AndroidManifest.xml
+
+      - name: Use the fixed key in Gradle
+        run: |
+          test -f android/app/build.gradle || (echo "android/app/build.gradle not found" && exit 1)
+          {
+            echo ""
+            echo "android {"
+            echo "    signingConfigs {"
+            echo "        debug {"
+            echo "            storeFile file('$GITHUB_WORKSPACE/debug.keystore')"
+            echo "            storePassword 'android'"
+            echo "            keyAlias 'androiddebugkey'"
+            echo "            keyPassword 'android'"
+            echo "        }"
+            echo "    }"
+            echo "}"
+          } >> android/app/build.gradle
 
       - name: Build APK
         working-directory: android
