@@ -6,7 +6,17 @@
 
 const STORAGE_KEY = "pr_upgrades_v1";
 
-export type UpgradeId = "candy" | "luck" | "exp" | "money" | "shop" | "balls" | "shards";
+export type UpgradeId =
+  | "candy"
+  | "luck"
+  | "exp"
+  | "money"
+  | "shop"
+  | "balls"
+  | "shards"
+  | "shiny"
+  | "hidden"
+  | "friend";
 
 export interface UpgradeDef {
   id: UpgradeId;
@@ -43,20 +53,20 @@ export const UPGRADES: readonly UpgradeDef[] = [
   {
     id: "exp",
     name: "EXP Boost",
-    description: "+10% EXP per level",
+    description: "+30% EXP per level",
     maxLevel: 10,
     baseCost: 15,
     costGrowth: 1.4,
-    perLevel: 0.1,
+    perLevel: 0.3,
   },
   {
     id: "money",
     name: "Money Boost",
-    description: "+10% wave money per level",
+    description: "+30% wave money per level",
     maxLevel: 10,
     baseCost: 15,
     costGrowth: 1.4,
-    perLevel: 0.1,
+    perLevel: 0.3,
   },
   {
     id: "shop",
@@ -79,11 +89,38 @@ export const UPGRADES: readonly UpgradeDef[] = [
   {
     id: "shards",
     name: "Shard Magnet",
-    description: "+10% shards per level",
+    description: "+30% shards per level",
     maxLevel: 10,
     baseCost: 40,
     costGrowth: 1.6,
-    perLevel: 0.1,
+    perLevel: 0.3,
+  },
+  {
+    id: "shiny",
+    name: "Shiny Rate",
+    description: "+50% wild shiny chance per level",
+    maxLevel: 10,
+    baseCost: 40,
+    costGrowth: 1.5,
+    perLevel: 0.5,
+  },
+  {
+    id: "hidden",
+    name: "Hidden Ability",
+    description: "+50% wild hidden ability chance per level",
+    maxLevel: 10,
+    baseCost: 30,
+    costGrowth: 1.5,
+    perLevel: 0.5,
+  },
+  {
+    id: "friend",
+    name: "Friendship",
+    description: "+30% friendship gain per level",
+    maxLevel: 10,
+    baseCost: 15,
+    costGrowth: 1.4,
+    perLevel: 0.3,
   },
 ];
 
@@ -213,4 +250,19 @@ export function getShopPriceMultiplier(): number {
 /** Extra Poke Balls at the start of a run. */
 export function getStartingBallsBonus(): number {
   return getUpgradeLevel("balls") * getDef("balls").perLevel;
+}
+
+/** Multiplier applied to the wild shiny threshold (1 = normal chance). */
+export function getShinyMultiplier(): number {
+  return 1 + getUpgradeLevel("shiny") * getDef("shiny").perLevel;
+}
+
+/** Multiplier applied to the wild hidden ability chance (1 = normal chance). */
+export function getHiddenAbilityMultiplier(): number {
+  return 1 + getUpgradeLevel("hidden") * getDef("hidden").perLevel;
+}
+
+/** Applies the friendship upgrade to a friendship gain (fractions are rounded randomly). */
+export function boostFriendship(baseAmount: number): number {
+  return roundFair(baseAmount * (1 + getUpgradeLevel("friend") * getDef("friend").perLevel));
 }

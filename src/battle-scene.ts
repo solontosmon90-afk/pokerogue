@@ -2310,7 +2310,7 @@ export class BattleScene extends SceneBase {
     const waveIndex = Math.ceil((this.currentBattle?.waveIndex || 1) / 10) * 10;
     const difficultyWaveIndex = this.gameMode.getWaveForDifficulty(waveIndex);
     const baseLevel = (1 + difficultyWaveIndex / 2 + Math.pow(difficultyWaveIndex / 25, 2)) * 1.2;
-    return Math.ceil(baseLevel / 2) * 2 + 2;
+   return Math.ceil(baseLevel / 2) * 2 + 2;
   }
 
   randomSpecies(

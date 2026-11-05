@@ -1,5 +1,6 @@
 import type { PreAttackModifyDamageAbAttrParams, UngroundedAbAttr } from "#abilities/ab-attrs";
 import type { Ability } from "#abilities/ability";
+import { boostFriendship, getHiddenAbilityMultiplier, getShinyMultiplier } from "#app/upgrades";
 import { applyAbAttrs, applyOnGainAbAttrs, applyOnLoseAbAttrs } from "#abilities/apply-ab-attrs";
 import { generateMoveset } from "#ai/ai-moveset-gen";
 import type { Battle } from "#app/battle";
@@ -637,7 +638,9 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
     if (!this.hasTrainer()) {
       globalScene.applyModifiers(HiddenAbilityRateBoosterModifier, true, hiddenAbilityChance);
     }
-
+    if (!this.hasTrainer()) {
+      hiddenAbilityChance.value = Math.max(1, Math.floor(hiddenAbilityChance.value / getHiddenAbilityMultiplier()));
+    }
     // Neither RNG roll depends on the outcome of the other, so that Ability Charms do not affect RNG.
     const regularAbility = this.species.ability2 === this.species.ability1 ? 0 : randSeedInt(2);
     const useHiddenAbility = this.species.abilityHidden ? !randSeedInt(hiddenAbilityChance.value) : false;
@@ -3069,6 +3072,7 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
       if (this.isPlayer() || !this.hasTrainer()) {
         // Apply shiny modifiers only to Player or wild mons
         globalScene.applyModifiers(ShinyRateBoosterModifier, true, shinyThreshold);
+       shinyThreshold.value *= getShinyMultiplier();
       }
     } else {
       shinyThreshold.value = thresholdOverride;
@@ -6184,7 +6188,7 @@ export class PlayerPokemon extends Pokemon {
     }
     const amount = new NumberHolder(friendship);
     globalScene.applyModifier(PokemonFriendshipBoosterModifier, true, this, amount);
-    friendship = amount.value;
+     friendship = boostFriendship(amount.value);
 
     const newFriendship = this.friendship + friendship;
     /** If capped is true, don't allow friendship gain to exceed {@linkcode RARE_CANDY_FRIENDSHIP_CAP} */
