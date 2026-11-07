@@ -16,7 +16,8 @@ export type UpgradeId =
   | "shards"
   | "shiny"
   | "hidden"
-  | "friend";
+  | "friend"
+  | "catch";
 
 export interface UpgradeDef {
   id: UpgradeId;
@@ -121,6 +122,15 @@ export const UPGRADES: readonly UpgradeDef[] = [
     baseCost: 15,
     costGrowth: 1.4,
     perLevel: 0.3,
+  },
+  {
+    id: "catch",
+    name: "Catch Rate",
+    description: "+50% catch rate per level",
+    maxLevel: 10,
+    baseCost: 30,
+    costGrowth: 1.5,
+    perLevel: 0.5,
   },
 ];
 
@@ -265,4 +275,9 @@ export function getHiddenAbilityMultiplier(): number {
 /** Applies the friendship upgrade to a friendship gain (fractions are rounded randomly). */
 export function boostFriendship(baseAmount: number): number {
   return roundFair(baseAmount * (1 + getUpgradeLevel("friend") * getDef("friend").perLevel));
+}
+
+/** Multiplier applied to the modified catch rate (1 = normal). */
+export function getCatchRateMultiplier(): number {
+  return 1 + getUpgradeLevel("catch") * getDef("catch").perLevel;
 }
