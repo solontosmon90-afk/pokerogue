@@ -2900,12 +2900,12 @@ export function getPartyLuckValue(party: readonly Pokemon[]): number {
     0,
     14,
   );
-    return Math.min(timedEventManager.getEventLuckBoost() + (luck ?? 0) + getLuckBonus(), 14);
-}
+  return Math.min(timedEventManager.getEventLuckBoost() + (luck ?? 0) + getLuckBonus(), 40);}
 
 export function getLuckString(luckValue: number): string {
-  return ["D", "C", "C+", "B-", "B", "B+", "A-", "A", "A+", "A++", "S", "S+", "SS", "SS+", "SSS"][luckValue];
-}
+  return luckValue > 14
+    ? `SSS+${luckValue - 14}`
+    : ["D", "C", "C+", "B-", "B", "B+", "A-", "A", "A+", "A++", "S", "S+", "SS", "SS+", "SSS"][luckValue];}
 
 export function getLuckTextTint(luckValue: number): number {
   let modifierTier: ModifierTier;

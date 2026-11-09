@@ -46,10 +46,10 @@ export const UPGRADES: readonly UpgradeDef[] = [
     id: "luck",
     name: "Lucky Charm",
     description: "+1 party luck per level",
-    maxLevel: 7,
+    maxLevel: 10,
     baseCost: 50,
-    costGrowth: 1.6,
-    perLevel: 1,
+    costGrowth: 1.2,
+    perLevel: 2,
   },
   {
     id: "exp",
