@@ -33,7 +33,6 @@ import type { ModifierSelectUiHandler } from "#ui/modifier-select-ui-handler";
 import { SHOP_OPTIONS_ROW_LIMIT } from "#ui/modifier-select-ui-handler";
 import { PartyOption, PartyUiHandler } from "#ui/party-ui-handler";
 import { NumberHolder } from "#utils/common";
-import i18next from "i18next";
 
 export type ModifierSelectCallback = (rowCursor: number, cursor: number) => boolean;
 
@@ -83,7 +82,7 @@ export class SelectModifierPhase extends BattlePhase {
 
     const modifierSelectCallback = (rowCursor: number, cursor: number) => {
       if (rowCursor < 0 || cursor < 0) {
-        globalScene.ui.showText(i18next.t("battle:skipItemQuestion"), null, () => {
+        globalScene.ui.showText("Do you want to skip this item?", null, () => {
           const skipRewardConfirmOptions: ConfirmModeConfig = {
             yesHandler: () => {
               globalScene.ui.revertMode();
