@@ -17,7 +17,9 @@ export type UpgradeId =
   | "shiny"
   | "hidden"
   | "friend"
-  | "catch";
+  | "catch"
+  | "rewards"
+  | "reroll";
 
 export interface UpgradeDef {
   id: UpgradeId;
@@ -131,6 +133,24 @@ export const UPGRADES: readonly UpgradeDef[] = [
     baseCost: 30,
     costGrowth: 1.5,
     perLevel: 0.5,
+  },
+    {
+    id: "rewards",
+    name: "Reward Choices",
+    description: "+1 reward choice per level",
+    maxLevel: 4,
+    baseCost: 150,
+    costGrowth: 2,
+    perLevel: 1,
+  },
+  {
+    id: "reroll",
+    name: "Reroll Discount",
+    description: "-10% reroll cost per level",
+    maxLevel: 10,
+    baseCost: 25,
+    costGrowth: 1.5,
+    perLevel: 0.1,
   },
 ];
 
@@ -280,4 +300,14 @@ export function boostFriendship(baseAmount: number): number {
 /** Multiplier applied to the modified catch rate (1 = normal). */
 export function getCatchRateMultiplier(): number {
   return 1 + getUpgradeLevel("catch") * getDef("catch").perLevel;
+}
+
+/** Extra reward cards offered after each wave. */
+export function getRewardChoicesBonus(): number {
+  return getUpgradeLevel("rewards") * getDef("rewards").perLevel;
+}
+
+/** Multiplier on the reroll cost (1 = full price, 0 = free). */
+export function getRerollCostMultiplier(): number {
+  return Math.max(0, 1 - getUpgradeLevel("reroll") * getDef("reroll").perLevel);
 }
