@@ -1,5 +1,6 @@
 import { audioManager } from "#app/global-audio-manager";
 import { globalScene } from "#app/global-scene";
+import { getRerollCostMultiplier, getRewardChoicesBonus } from "#app/upgrades";
 import { activeOverrides } from "#app/overrides";
 import { ModifierPoolType } from "#enums/modifier-pool-type";
 import type { ModifierTier } from "#enums/modifier-tier";
@@ -393,6 +394,7 @@ export class SelectModifierPhase extends BattlePhase {
     const modifierCountHolder = new NumberHolder(3);
     globalScene.applyModifiers(ExtraModifierModifier, true, modifierCountHolder);
     globalScene.applyModifiers(TempExtraModifierModifier, true, modifierCountHolder);
+    modifierCountHolder.value += getRewardChoicesBonus();
 
     // If custom modifiers are specified, overrides default item count
     if (this.customModifierSettings) {
@@ -464,7 +466,7 @@ export class SelectModifierPhase extends BattlePhase {
     // Apply Black Sludge to reroll cost
     const modifiedRerollCost = new NumberHolder(baseMultiplier);
     globalScene.applyModifier(HealShopCostModifier, true, modifiedRerollCost);
-    return modifiedRerollCost.value;
+    return Math.floor(modifiedRerollCost.value * getRerollCostMultiplier());
   }
 
   getPoolType(): ModifierPoolType {
