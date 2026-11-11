@@ -1,6 +1,6 @@
 import { PLAYER_PARTY_MAX_SIZE } from "#app/constants";
 import { audioManager } from "#app/global-audio-manager";
-import { getCatchRateMultiplier } from "#app/upgrades";
+import { getCatchRateMultiplier, getCriticalCatchMultiplier, getIvFloor } from "#app/upgrades";
 import { timedEventManager } from "#app/global-event-manager";
 import { globalScene } from "#app/global-scene";
 import { IS_TEST, isBeta, isDev } from "#constants/app-constants";
@@ -88,7 +88,7 @@ export class AttemptCapturePhase extends PokemonPhase {
       );
     }
 
-    const isCritical = pokemon.randBattleSeedInt(256) < criticalCaptureChance;
+    const isCritical = pokemon.randBattleSeedInt(256) < criticalCaptureChance * getCriticalCatchMultiplier();
     const fpOffset = pokemon.getFieldPositionOffset();
 
     const pokeballAtlasKey = getPokeballAtlasKey(this.pokeballType);
@@ -272,7 +272,7 @@ export class AttemptCapturePhase extends PokemonPhase {
     }
 
     pokemonInfoContainer.show(pokemon, true);
-
+    pokemon.ivs = pokemon.ivs.map(iv => Math.max(iv, getIvFloor()));
     gameData.updateSpeciesDexIvs(pokemon.species.getRootSpeciesId(true), pokemon.ivs);
 
     const addStatus = new BooleanHolder(true);

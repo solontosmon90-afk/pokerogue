@@ -1,5 +1,5 @@
 import { applyAbAttrs } from "#abilities/apply-ab-attrs";
-import { addShards, getExpMultiplier, getMoneyMultiplier, getShardsForWave, getStartingBallsBonus } from "#app/upgrades";
+import { addShards, getExpMultiplier, getMoneyMultiplier, getShardsForWave, getStartingBallsBonus, getWaveRegenPercent } from "#app/upgrades";
 import { Animation } from "#app/animations";
 import { Battle } from "#app/battle";
 import {
@@ -1555,6 +1555,15 @@ export class BattleScene extends SceneBase {
   // TODO: Split this up and move it to a "post battle phase"
   private doPostBattleCleanup(lastBattle: Battle, maxExpLevel: number): void {
     addShards(getShardsForWave(lastBattle.waveIndex));
+        const regenPercent = getWaveRegenPercent();
+    if (regenPercent > 0) {
+      for (const p of this.getPlayerParty()) {
+        if (!p.isFainted()) {
+          p.heal(Math.ceil((p.getMaxHp() * regenPercent) / 100));
+          p.updateInfo(true);
+        }
+      }
+    }
     const isNewBiome = this.isNewBiome(lastBattle);
     /** Whether to reset and recall pokemon */
     const resetArenaState =

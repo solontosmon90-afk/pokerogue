@@ -1,6 +1,12 @@
 import type { PreAttackModifyDamageAbAttrParams, UngroundedAbAttr } from "#abilities/ab-attrs";
 import type { Ability } from "#abilities/ability";
-import { boostFriendship, getHiddenAbilityMultiplier, getShinyMultiplier } from "#app/upgrades";
+import {
+  boostFriendship,
+  getCritStageBonus,
+  getDamageTakenMultiplier,
+  getHiddenAbilityMultiplier,
+  getShinyMultiplier,
+} from "#app/upgrades";
 import { applyAbAttrs, applyOnGainAbAttrs, applyOnLoseAbAttrs } from "#abilities/apply-ab-attrs";
 import { generateMoveset } from "#ai/ai-moveset-gen";
 import type { Battle } from "#app/battle";
@@ -1423,7 +1429,9 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
       // Dragon cheer only gives +1 crit stage to non-dragon types
       critStage.value += critBoostTag.critStages;
     }
-
+    if (source.isPlayer()) {
+      critStage.value += getCritStageBonus();
+    }
     console.log(`crit stage: +${critStage.value}`);
     return critStage.value;
   }
@@ -3956,7 +3964,10 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
         damage,
       });
     }
-
+    /** Damage Guard upgrade: enemies deal less damage to the player */
+    if (this.isPlayer() && !source.isPlayer()) {
+      damage.value = toDmgValue(damage.value * getDamageTakenMultiplier());
+    }
     /** Apply the enemy's Damage and Resistance tokens */
     if (!source.isPlayer()) {
       globalScene.applyModifiers(EnemyDamageBoosterModifier, false, damage);

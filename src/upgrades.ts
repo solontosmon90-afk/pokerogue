@@ -19,7 +19,12 @@ export type UpgradeId =
   | "friend"
   | "catch"
   | "rewards"
-  | "reroll";
+  | "reroll"
+  | "critcatch"
+  | "ivfloor"
+  | "regen"
+  | "guard"
+  | "crit";
 
 export interface UpgradeDef {
   id: UpgradeId;
@@ -151,6 +156,51 @@ export const UPGRADES: readonly UpgradeDef[] = [
     baseCost: 25,
     costGrowth: 1.5,
     perLevel: 0.1,
+  },
+    {
+    id: "critcatch",
+    name: "Critical Catch",
+    description: "+50% critical capture chance per level",
+    maxLevel: 10,
+    baseCost: 35,
+    costGrowth: 1.5,
+    perLevel: 0.5,
+  },
+  {
+    id: "ivfloor",
+    name: "IV Floor",
+    description: "+3 minimum IVs on caught Pokemon per level",
+    maxLevel: 10,
+    baseCost: 40,
+    costGrowth: 1.5,
+    perLevel: 3,
+  },
+  {
+    id: "regen",
+    name: "Wave Regen",
+    description: "heal 5% max HP after each wave per level",
+    maxLevel: 6,
+    baseCost: 40,
+    costGrowth: 1.6,
+    perLevel: 5,
+  },
+  {
+    id: "guard",
+    name: "Damage Guard",
+    description: "-4% damage taken per level",
+    maxLevel: 10,
+    baseCost: 60,
+    costGrowth: 1.5,
+    perLevel: 0.04,
+  },
+  {
+    id: "crit",
+    name: "Critical Eye",
+    description: "+1 crit stage per level",
+    maxLevel: 2,
+    baseCost: 80,
+    costGrowth: 2.5,
+    perLevel: 1,
   },
 ];
 
@@ -310,4 +360,24 @@ export function getRewardChoicesBonus(): number {
 /** Multiplier on the reroll cost (1 = full price, 0 = free). */
 export function getRerollCostMultiplier(): number {
   return Math.max(0, 1 - getUpgradeLevel("reroll") * getDef("reroll").perLevel);
+}
+
+export function getCriticalCatchMultiplier(): number {
+  return 1 + getUpgradeLevel("critcatch") * getDef("critcatch").perLevel;
+}
+
+export function getIvFloor(): number {
+  return getUpgradeLevel("ivfloor") * getDef("ivfloor").perLevel;
+}
+
+export function getWaveRegenPercent(): number {
+  return getUpgradeLevel("regen") * getDef("regen").perLevel;
+}
+
+export function getDamageTakenMultiplier(): number {
+  return Math.max(0.1, 1 - getUpgradeLevel("guard") * getDef("guard").perLevel);
+}
+
+export function getCritStageBonus(): number {
+  return getUpgradeLevel("crit") * getDef("crit").perLevel;
 }
