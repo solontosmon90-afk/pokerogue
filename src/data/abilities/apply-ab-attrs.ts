@@ -1,4 +1,9 @@
+import type { Ability } from "#abilities/ability";
 import { globalScene } from "#app/global-scene";
+import { isSecondPassiveUnlocked } from "#app/second-passive";
+import { allAbilities } from "#data/data-lists";
+import { AbilityId } from "#enums/ability-id";
+import type { Pokemon } from "#field/pokemon";
 import type {
   AbAttrBaseParams,
   AbAttrMap,
@@ -19,17 +24,77 @@ interface ApplyAbAttrConfig<T extends AbAttrString> {
   attrFilter?: AbAttrPredicate<T>;
 }
 
+/**
+ * Get the "second passive" of a Pokemon: an extra ability (the species' hidden ability)
+ * that the player unlocked with candy in the starter select menu.
+ * @returns The extra {@linkcode Ability}, or `null` if the Pokemon has none.
+ */
+function getSecondPassive(pokemon: Pokemon): Ability | null {
+  if (!pokemon.isPlayer() || !isSecondPassiveUnlocked(pokemon.species.getRootSpeciesId())) {
+    return null;
+  }
+
+  const abilityId = pokemon.getSpeciesForm(true).getAbility(2);
+  if (abilityId == null || abilityId === AbilityId.NONE) {
+    return null;
+  }
+
+  const ability = allAbilities[abilityId];
+  if (!ability) {
+    return null;
+  }
+
+  // Never apply the same ability twice
+  if (ability.id === pokemon.getAbility().id) {
+    return null;
+  }
+  if (pokemon.hasPassive() && ability.id === pokemon.getPassiveAbility().id) {
+    return null;
+  }
+
+  return ability;
+}
+
+/** Checks whether the second passive can currently be applied (mirrors `Pokemon#canApplyAbility`). */
+function canApplyBonusAbility(pokemon: Pokemon, ability: Ability): boolean {
+  if (pokemon.isFusion() && ability.hasAttr("NoFusionAbilityAbAttr")) {
+    return false;
+  }
+  if (globalScene.movesetGenInProgress) {
+    return true;
+  }
+  if (pokemon.isTransformed() && ability.hasAttr("NoTransformAbilityAbAttr")) {
+    return false;
+  }
+  const arena = globalScene.arena;
+  if (arena.ignoreAbilities && arena.ignoringEffectSource !== pokemon.getBattlerIndex() && ability.ignorable) {
+    return false;
+  }
+  if (pokemon.summonData.abilitySuppressed && ability.suppressable) {
+    return false;
+  }
+  return (pokemon.hp > 0 || ability.bypassFaint) && !ability.conditions.some(condition => !condition(pokemon));
+}
+
 function applySingleAbAttrs<T extends AbAttrString>(
   attrType: T,
   params: AbAttrParamMap[T],
   { attrFilter = () => true, messages }: ApplyAbAttrConfig<T> = {},
+  bonusAbility?: Ability,
 ) {
   const { simulated = false, passive = false, pokemon } = params;
-  if (!pokemon.canApplyAbility(passive) || (passive && pokemon.getPassiveAbility().id === pokemon.getAbility().id)) {
+  if (bonusAbility) {
+    if (!canApplyBonusAbility(pokemon, bonusAbility)) {
+      return;
+    }
+  } else if (
+    !pokemon.canApplyAbility(passive)
+    || (passive && pokemon.getPassiveAbility().id === pokemon.getAbility().id)
+  ) {
     return;
   }
 
-  const ability = passive ? pokemon.getPassiveAbility() : pokemon.getAbility();
+  const ability = bonusAbility ?? (passive ? pokemon.getPassiveAbility() : pokemon.getAbility());
   const attrs = ability.getAttrs(attrType);
 
   for (const attr of attrs) {
@@ -49,7 +114,8 @@ function applySingleAbAttrs<T extends AbAttrString>(
 
     let abShown = false;
 
-    if (attr.showAbility && !simulated) {
+    // The ability flyout only knows about the regular ability and passive, so it is skipped for the second passive
+    if (attr.showAbility && !simulated && !bonusAbility) {
       globalScene.phaseManager.queueAbilityDisplay(pokemon, passive, true);
       abShown = true;
     }
@@ -98,6 +164,14 @@ function applyAbAttrsInternal<T extends CallableAbAttrString>(
     params.passive = passive;
     applySingleAbAttrs(attrType, params, config);
   }
+
+  // Second passive (extra ability unlocked with candy in the starter select menu)
+  const bonusAbility = getSecondPassive(params.pokemon);
+  if (bonusAbility) {
+    params.passive = false;
+    applySingleAbAttrs(attrType, params, config, bonusAbility);
+  }
+
   // Restore passive if it was undefined on entry to allow re-use of parameter objects
   params.passive = undefined;
 }

@@ -1,5 +1,6 @@
 import { PLAYER_PARTY_MAX_SIZE, VALUE_REDUCTION_MAX } from "#app/constants";
 import { eventBus } from "#app/event-bus";
+import { isSecondPassiveUnlocked, unlockSecondPassive } from "#app/second-passive";
 import { audioManager } from "#app/global-audio-manager";
 import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
@@ -1965,7 +1966,46 @@ export class StarterSelectUiHandler extends MessageUiHandler {
           iconsConfig: getCandyIconsConfig(getColors(isPassiveAvailable)),
         });
       }
-
+      // Second passive option (extra ability: the species' hidden ability)
+      const secondPassiveSpecies = speciesDataRegistry.getSpecies(this.lastStarterId);
+      const hasSecondPassiveAbility =
+        secondPassiveSpecies.abilityHidden !== secondPassiveSpecies.ability1
+        && secondPassiveSpecies.abilityHidden !== AbilityId.NONE;
+      if (
+        hasSecondPassiveAbility
+        && !isSecondPassiveUnlocked(this.lastStarterId)
+        && !globalScene.gameMode.hasChallenge(Challenges.FRESH_START)
+      ) {
+        const secondPassiveCost = getPassiveCandyCount(speciesDataRegistry.getStarterCost(this.lastStarterId)) * 2;
+        const canAffordSecondPassive = activeOverrides.FREE_CANDY_UPGRADE_OVERRIDE || candyCount >= secondPassiveCost;
+        useCandiesOptions.push({
+          label: `×${secondPassiveCost} Unlock 2nd Passive`,
+          handler: () => {
+            if (activeOverrides.FREE_CANDY_UPGRADE_OVERRIDE || candyCount >= secondPassiveCost) {
+              unlockSecondPassive(this.lastStarterId);
+              if (!activeOverrides.FREE_CANDY_UPGRADE_OVERRIDE) {
+                persistentStarterData.candyCount -= secondPassiveCost;
+                starterData.candyCount = persistentStarterData.candyCount;
+              }
+              this.starterSummary.updateCandyCount(starterData.candyCount);
+              globalScene.gameData.saveSystem().then(success => {
+                if (!success) {
+                  return globalScene.reset(true);
+                }
+              });
+              ui.setMode(UiMode.STARTER_SELECT);
+              this.setStarterDetails(this.lastStarterId);
+              audioManager.playSound("se/buy");
+              return true;
+            }
+            return false;
+          },
+          color: canAffordSecondPassive ? TextStyle.WINDOW : TextStyle.SHADOW_TEXT,
+          iconsConfig: getCandyIconsConfig(
+            canAffordSecondPassive ? getStarterColors(this.lastStarterId) : (["808080", "808080"] as const),
+          ),
+        });
+      }
       // Reduce cost option
       const valueReduction = starterData.valueReduction;
       if (valueReduction < VALUE_REDUCTION_MAX && !globalScene.gameMode.hasChallenge(Challenges.FRESH_START)) {
