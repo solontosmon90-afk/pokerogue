@@ -7,6 +7,7 @@
 const STORAGE_KEY = "pr_upgrades_v1";
 
 export type UpgradeId =
+  | "bounty"
   | "candy"
   | "luck"
   | "exp"
@@ -40,6 +41,15 @@ export interface UpgradeDef {
 }
 
 export const UPGRADES: readonly UpgradeDef[] = [
+  {
+    id: "bounty",
+    name: "Boss Bounty",
+    description: "+5 shards on boss waves per level",
+    maxLevel: 10,
+    baseCost: 40,
+    costGrowth: 1.5,
+    perLevel: 5,
+  },
   {
     id: "candy",
     name: "Candy Boost",
@@ -295,7 +305,8 @@ export function addShards(amount: number): void {
  * increased by the Shard Magnet upgrade.
  */
 export function getShardsForWave(waveIndex: number): number {
-  const base = 1 + Math.floor(waveIndex / 20) + (waveIndex % 10 === 0 ? 5 : 0);
+  const bountyBonus = waveIndex % 10 === 0 ? getUpgradeLevel("bounty") * getDef("bounty").perLevel : 0;
+  const base = 1 + Math.floor(waveIndex / 20) + (waveIndex % 10 === 0 ? 5 : 0) + bountyBonus;
   return roundFair(base * (1 + getUpgradeLevel("shards") * getDef("shards").perLevel));
 }
 

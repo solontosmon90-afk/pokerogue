@@ -1,5 +1,6 @@
 import { VALUE_REDUCTION_MAX } from "#app/constants";
 import { audioManager } from "#app/global-audio-manager";
+import { isSecondPassiveUnlocked, unlockSecondPassive } from "#app/second-passive";
 import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
 import { speciesDataRegistry } from "#app/global-species-data-registry";
@@ -1500,7 +1501,22 @@ export class PokedexPageUiHandler extends MessageUiHandler {
                   onHover: () => this.infoOverlay.show(ability.description),
                 });
               }
-
+              if (this.abilityHidden) {
+                options.push({
+                  label: "2nd Passive",
+                  selectable: false,
+                  color: TextStyle.MONEY_WINDOW,
+                  handler: () => false,
+                  onHover: () => this.infoOverlay.clear(),
+                });
+                const secondAbility = allAbilities.at(this.abilityHidden) ?? { name: "", description: "" };
+                options.push({
+                  label: secondAbility.name,
+                  color: isSecondPassiveUnlocked(this.starterId) ? TextStyle.SETTINGS_VALUE : TextStyle.SHADOW_TEXT,
+                  handler: () => false,
+                  onHover: () => this.infoOverlay.show(secondAbility.description),
+                });
+              }
               if (this.passive) {
                 options.push({
                   label: i18next.t("pokedexUiHandler:passive"),
@@ -1992,7 +2008,40 @@ export class PokedexPageUiHandler extends MessageUiHandler {
                 iconsConfig: getCandyIconsConfig(getColors(isPassiveAvailable)),
               });
             }
+            // Second passive option (extra ability: the species' hidden ability)
+            if (this.abilityHidden && !isSecondPassiveUnlocked(this.starterId)) {
+              const secondPassiveCost = getPassiveCandyCount(speciesDataRegistry.getStarterCost(this.starterId)) * 2;
+              const canAffordSecondPassive =
+                activeOverrides.FREE_CANDY_UPGRADE_OVERRIDE || candyCount >= secondPassiveCost;
+              options.push({
+                label: `×${secondPassiveCost} Unlock 2nd Passive`,
+                handler: () => {
+                  if (!activeOverrides.FREE_CANDY_UPGRADE_OVERRIDE && candyCount < secondPassiveCost) {
+                    return false;
+                  }
 
+                  unlockSecondPassive(this.starterId);
+                  if (!activeOverrides.FREE_CANDY_UPGRADE_OVERRIDE) {
+                    starterData.candyCount -= secondPassiveCost;
+                  }
+                  this.pokemonCandyCountText.setText(`×${starterData.candyCount}`);
+                  updateCandyCountTextStyle(this.pokemonCandyCountText, starterData.candyCount);
+                  globalScene.gameData.saveSystem().then(saveSuccess => {
+                    if (!saveSuccess) {
+                      return globalScene.reset(true);
+                    }
+                  });
+                  audioManager.playSound("se/buy");
+                  ui.setMode(UiMode.POKEDEX_PAGE, "refresh");
+
+                  return true;
+                },
+                color: canAffordSecondPassive ? TextStyle.WINDOW : TextStyle.SHADOW_TEXT,
+                iconsConfig: getCandyIconsConfig(
+                  canAffordSecondPassive ? getStarterColors(this.starterId) : (["808080", "808080"] as const),
+                ),
+              });
+            }
             // Reduce cost option
             const valueReduction = starterData.valueReduction;
             if (valueReduction < VALUE_REDUCTION_MAX) {
