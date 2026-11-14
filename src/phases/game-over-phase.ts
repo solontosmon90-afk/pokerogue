@@ -4,6 +4,7 @@ import { audioManager } from "#app/global-audio-manager";
 import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
 import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { getStoryEnding, recordRunEnd } from "#app/story-mode";
 import { bypassLogin } from "#constants/app-constants";
 import { modifierTypes } from "#data/data-lists";
 import { getCharVariantFromDialogue } from "#data/dialogue";
@@ -149,6 +150,9 @@ export class GameOverPhase extends BattlePhase {
 
   handleGameOver(): void {
     const doGameOver = (newClear: boolean) => {
+      if (globalScene.gameMode.isClassic) {
+        recordRunEnd(this.isVictory);
+      }
       globalScene.disableMenu = true;
       globalScene.time.delayedCall(1000, () => {
         let firstClear = false;
@@ -203,7 +207,8 @@ export class GameOverPhase extends BattlePhase {
           };
 
           if (this.isVictory && globalScene.gameMode.isClassic) {
-            const dialogueKey = "miscDialogue:ending";
+            const storyEnding = getStoryEnding();
+            const dialogueKey = storyEnding ?? "miscDialogue:ending";
 
             if (globalScene.ui.shouldSkipDialogue(dialogueKey)) {
               const endCardPhase = globalScene.phaseManager.create("EndCardPhase");
@@ -214,7 +219,7 @@ export class GameOverPhase extends BattlePhase {
                 const genderIndex = settings.general.playerGender;
                 const genderStr = PlayerGender[genderIndex].toLowerCase();
                 // Dialogue has to be retrieved so that the rival's expressions can be loaded and shown via getCharVariantFromDialogue
-                const dialogue = i18next.t(dialogueKey, { context: genderStr });
+                const dialogue = storyEnding ?? i18next.t(dialogueKey, { context: genderStr });
                 globalScene.charSprite
                   .showCharacter(`rival_${settings.isPlayerFemale ? "m" : "f"}`, getCharVariantFromDialogue(dialogue))
                   .then(() => {

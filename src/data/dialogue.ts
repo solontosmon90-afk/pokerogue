@@ -1,6 +1,7 @@
 import { TrainerType } from "#enums/trainer-type";
 import { trainerConfigs } from "#trainers/trainer-config";
 import { capitalizeFirstLetter } from "#utils/strings";
+import { applyStoryDialogue } from "#app/story-mode";
 
 export interface TrainerTypeMessages {
   encounter?: string | string[];

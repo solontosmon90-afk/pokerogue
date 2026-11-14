@@ -1,4 +1,5 @@
 import { applyAbAttrs } from "#abilities/apply-ab-attrs";
+import { getStoryBossSegmentBonus, getStoryEnemyLevel } from "#app/story-mode";
 import { addShards, getExpMultiplier, getMoneyMultiplier, getShardsForWave, getStartingBallsBonus, getWaveRegenPercent } from "#app/upgrades";
 import { Animation } from "#app/animations";
 import { Battle } from "#app/battle";
@@ -914,6 +915,7 @@ export class BattleScene extends SceneBase {
     if (activeOverrides.ENEMY_LEVEL_OVERRIDE > 0) {
       level = activeOverrides.ENEMY_LEVEL_OVERRIDE;
     }
+    level = getStoryEnemyLevel(level);
     if (activeOverrides.ENEMY_SPECIES_OVERRIDE) {
       species = speciesDataRegistry.getSpecies(activeOverrides.ENEMY_SPECIES_OVERRIDE);
       // The fact that a Pokemon is a boss or not can change based on its Species and level
@@ -2007,6 +2009,7 @@ export class BattleScene extends SceneBase {
       ret++;
     }
     ret += Math.floor(waveIndex / 250);
+    ret += getStoryBossSegmentBonus();
 
     return ret;
   }

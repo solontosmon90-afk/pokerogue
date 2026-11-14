@@ -1,6 +1,7 @@
 import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
 import { Phase } from "#app/phase";
+import { getStoryEndCardText } from "#app/story-mode";
 import { TextStyle } from "#enums/text-style";
 import { addTextObject } from "#ui/text";
 import i18next from "i18next";
@@ -23,7 +24,7 @@ export class EndCardPhase extends Phase {
     this.text = addTextObject(
       globalScene.scaledCanvas.width / 2,
       globalScene.scaledCanvas.height - 16,
-      i18next.t("battle:congratulations"),
+      getStoryEndCardText() ?? i18next.t("battle:congratulations"),
       TextStyle.SUMMARY,
       { fontSize: "128px" },
     );

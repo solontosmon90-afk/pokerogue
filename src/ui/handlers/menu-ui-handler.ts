@@ -1,5 +1,6 @@
 import { pokerogueApi } from "#api/api";
 import { loggedInUser, updateUserInfo } from "#app/account";
+import { getLoopCount, isStoryMode, setStoryMode } from "#app/story-mode";
 import { buyUpgrade, getShards, getUpgradeCost, getUpgradeLevel, UPGRADES } from "#app/upgrades";
 import { audioManager } from "#app/global-audio-manager";
 import { globalScene } from "#app/global-scene";
@@ -604,7 +605,15 @@ export class MenuUiHandler extends OptionSelectUiHandler {
       },
       keepOpen: true,
     });
-
+    options.unshift({
+      label: `Story Mode ${isStoryMode() ? "ON" : "OFF"} - Loop ${getLoopCount()}`,
+      handler: () => {
+        setStoryMode(!isStoryMode());
+        Promise.resolve(ui.revertMode()).then(() => this.showUpgradesMenu());
+        return true;
+      },
+      keepOpen: true,
+    });
     ui.showText(`Shards: ${getShards()}`, 0);
     ui.setOverlayMode(UiMode.MENU_OPTION_SELECT, {
       xOffset: this.optionSelectBg.displayWidth,
